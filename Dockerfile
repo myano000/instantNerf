@@ -84,34 +84,36 @@ RUN apt-get install -y \
     libatlas-base-dev \
     libsuitesparse-dev
 
+RUN apt-get install -y libmetis-dev
+
 # abseilライブラリをインストール
 # abseilライブラリをソースからビルド
-RUN git clone https://github.com/abseil/abseil-cpp.git && \
+RUN cd /root && \
+    git clone https://github.com/abseil/abseil-cpp.git && \
     cd abseil-cpp && \
+    git checkout 20230125.3 && \
     mkdir build && \
     cd build && \
     cmake .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
              -DCMAKE_BUILD_TYPE=Release && \
     make -j$(nproc) && \
-    make install && \
-    cd /root
+    make install
 
 
 
-# Install Ceres Solver
+
 RUN git clone https://ceres-solver.googlesource.com/ceres-solver && \
     cd ceres-solver && \
     git checkout $(git describe --tags) && \
     mkdir build && \
     cd build && \
     cmake .. -DBUILD_TESTING=OFF \
-         -DBUILD_EXAMPLES=OFF \
-         -DCMAKE_BUILD_TYPE=Release \
-         -DBUILD_SHARED_LIBS=ON \
-         -Dabsl_VERSION="20230125.3" && \
+             -DBUILD_EXAMPLES=OFF \
+             -DCMAKE_BUILD_TYPE=Release \
+             -DBUILD_SHARED_LIBS=ON && \
     make -j$(nproc) && \
-    make install && \
-    cd /root
+    make install
+
 
 
 
