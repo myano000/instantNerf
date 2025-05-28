@@ -42,10 +42,29 @@ RUN apt-get  install -y \
     libqt5opengl5-dev \
     libcgal-dev
 
-# Install logging and flags libraries
+# Install cmake recent version
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.22.2/cmake-3.22.2.tar.gz && \
+      tar xzf cmake-3.22.2.tar.gz && \
+      cd cmake-3.22.2 && \
+      ./bootstrap && make && make install && \
+      cd /root
+
+# Install flags libraries
 RUN apt-get  install -y \
-    libgoogle-glog-dev \
     libgflags-dev
+
+# Install glog from source
+RUN cd /root && \
+    git clone https://github.com/google/glog.git && \
+    cd glog && \
+    git checkout v0.6.0 && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DBUILD_SHARED_LIBS=ON \
+             -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) && \
+    make install && \
+    cd /root
 
 # Install Python related packages
 RUN apt-get install -y \
@@ -54,12 +73,6 @@ RUN apt-get install -y \
 
 RUN pip install numpy pyexr pillow scipy opencv-python
 
-# Install cmake recent version
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.22.2/cmake-3.22.2.tar.gz && \
-      tar xzf cmake-3.22.2.tar.gz && \
-      cd cmake-3.22.2 && \
-      ./bootstrap && make && make install && \
-      cd /root
 
 # Install instant-ngp
 # If GPU autodetection fails, set the enviroment variable TCNN_CUDA_ARCHITECTURES
@@ -79,8 +92,6 @@ RUN apt-get install -y \
 
 RUN apt-get install -y \
     libtbb-dev \
-    libgoogle-glog-dev \
-    libgflags-dev \
     libatlas-base-dev \
     libsuitesparse-dev
 
@@ -110,9 +121,11 @@ RUN git clone https://ceres-solver.googlesource.com/ceres-solver && \
     cmake .. -DBUILD_TESTING=OFF \
              -DBUILD_EXAMPLES=OFF \
              -DCMAKE_BUILD_TYPE=Release \
-             -DBUILD_SHARED_LIBS=ON && \
+             -DBUILD_SHARED_LIBS=ON \
+             -DCMAKE_PREFIX_PATH="/usr/local" && \
     make -j$(nproc) && \
-    make install
+    make install && \
+    ldconfig
 
 
 
@@ -124,10 +137,13 @@ RUN wget https://github.com/colmap/colmap/archive/refs/tags/3.7.tar.gz && \
     cd colmap-3.7 && \
     mkdir build && \
     cd build && \
-    cmake .. && \
-    make -j && \
+    cmake .. \
+          -DCMAKE_PREFIX_PATH="/usr/local" \
+          -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) && \
     make install && \
-    cd /root
+    cd /root && \
+    ldconfig
 
 ENV PATH="/usr/local/cuda-11.2/bin:$PATH"
 ENV LD_LIBRARY_PATH="/usr/local/cuda-11.2/lib64:$LD_LIBRARY_PATH"
